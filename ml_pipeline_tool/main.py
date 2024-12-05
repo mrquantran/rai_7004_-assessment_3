@@ -89,9 +89,7 @@ def run_pipeline(
         results['model_path'] = model_path
 
         # Log pipeline end
-        log_entry = logger.log_pipeline_end(start_time, results)
-
-
+        logger.log_pipeline_end(start_time, results)
 
         return results
 
