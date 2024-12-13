@@ -82,9 +82,17 @@ def test_preprocessor_integration():
     )
     assert pipeline.pipeline.named_steps["preprocessor"] == preprocessor
 
-def test_invalid_algorithm():
-    """Test error handling for invalid algorithm"""
-    with pytest.raises(ValueError):
+def test_invalid_configurations():
+    """
+    Test error handling for invalid pipeline configurations.
+    """
+    # Invalid problem type
+    with pytest.raises(ValueError, match="Invalid problem type"):
+        MachineLearningPipeline(problem_type="invalid_type")
+    
+    # Invalid algorithm for problem type
+    with pytest.raises(ValueError, match="Invalid algorithm"):
         MachineLearningPipeline(
-            problem_type="classification", algorithm="invalid_algorithm"
+            problem_type="classification", 
+            algorithm="linear_regression"
         )
