@@ -25,6 +25,25 @@ from ml_pipeline_tool.pipeline_builder import MachineLearningPipeline
 from ml_pipeline_tool.preprocessor import AdvancedPreprocessor
 from ml_pipeline_tool.main import validate_input_file
 
+ALGORITHMS = {
+    "classification": [
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+        "svm",
+        "neural_network",
+        "knn",
+    ],
+    "regression": [
+        "linear_regression",
+        "decision_tree",
+        "random_forest",
+        "svm",
+        "neural_network",
+        "knn",
+    ],
+}
+
 # Test fixtures
 @pytest.fixture
 def sample_data():
@@ -48,8 +67,9 @@ def test_pipeline_initialization():
     assert pipeline.problem_type == "classification"
     assert pipeline.algorithm_name == "random_forest"
 
-def test_model_training(file_path = 'dataset/Iris.csv'):
-    """Test model training and evaluation"""
+def test_all_classification_algorithms_iris():
+    """Test all classification algorithms on the Iris dataset"""
+    file_path = 'dataset/Iris.csv'
     X = validate_input_file(file_path)
     assert X is not None
 
@@ -58,16 +78,23 @@ def test_model_training(file_path = 'dataset/Iris.csv'):
 
     assert not X.empty
 
-    pipeline = MachineLearningPipeline(
-        problem_type="classification", algorithm="random_forest", random_state=42
-    )
-    results = pipeline.train_and_evaluate(X, y, test_size=0.2)
+    for algo_name in ALGORITHMS['classification']:
+        try:
+            pipeline = MachineLearningPipeline(
+                problem_type="classification", 
+                algorithm=algo_name, 
+                random_state=42
+            )
+            results = pipeline.train_and_evaluate(X, y, test_size=0.2)
 
-    # Verify results structure
-    assert isinstance(results, dict)
-    assert "accuracy" in results
-    assert "cross_val_mean" in results
-    assert "cross_val_std" in results
+            # Verify results structure
+            assert isinstance(results, dict)
+            assert "accuracy" in results
+            assert "cross_val_mean" in results
+            assert "cross_val_std" in results
+            
+        except Exception as e:
+            pytest.fail(f"Algorithm {algo_name} failed: {str(e)}")
 
 
 def test_preprocessor_integration():
@@ -82,9 +109,45 @@ def test_preprocessor_integration():
     )
     assert pipeline.pipeline.named_steps["preprocessor"] == preprocessor
 
-def test_invalid_algorithm():
-    """Test error handling for invalid algorithm"""
-    with pytest.raises(ValueError):
+def test_all_regression_algorithms_housing():
+    """Test all regression algorithms on the Housing dataset"""
+    file_path = 'dataset/Housing.csv'
+    X = validate_input_file(file_path)
+    assert X is not None
+
+    y = X['price']
+    X = X.drop(columns=['price'])
+
+    assert not X.empty
+
+    for algo_name in ALGORITHMS['regression']:
+        try:
+            pipeline = MachineLearningPipeline(
+                problem_type="regression", 
+                algorithm=algo_name, 
+                random_state=42
+            )
+            results = pipeline.train_and_evaluate(X, y, test_size=0.2)
+
+            assert isinstance(results, dict)
+            assert "mse" in results
+            assert "cross_val_mean" in results
+            assert "cross_val_std" in results
+            
+        except Exception as e:
+            pytest.fail(f"Algorithm {algo_name} failed: {str(e)}")
+
+def test_invalid_configurations():
+    """
+    Test error handling for invalid pipeline configurations.
+    """
+    # Invalid problem type
+    with pytest.raises(ValueError, match="Invalid problem type"):
+        MachineLearningPipeline(problem_type="invalid_type")
+    
+    # Invalid algorithm for problem type
+    with pytest.raises(ValueError, match="Invalid algorithm"):
         MachineLearningPipeline(
-            problem_type="classification", algorithm="invalid_algorithm"
+            problem_type="classification", 
+            algorithm="linear_regression"
         )

@@ -127,12 +127,13 @@ class MachineLearningPipeline:
         metrics = {}
         for metric_name, metric_func in self.METRICS[self.problem_type].items():
             if self.problem_type == "classification" and metric_name == "auc":
-                y_pred_proba = self.pipeline.predict_proba(X_test)
+                if hasattr(self.pipeline, 'predict_proba'):
+                    y_pred_proba = self.pipeline.predict_proba(X_test)
 
-                if len(set(y_test)) > 2: # Multiclass
-                    metrics[metric_name] = metric_func(y_test, y_pred_proba, multi_class="ovr")
-                else:
-                    metrics[metric_name] = metric_func(y_test, y_pred_proba[:, 1])
+                    if len(set(y_test)) > 2: # Multiclass
+                        metrics[metric_name] = metric_func(y_test, y_pred_proba, multi_class="ovr")
+                    else:
+                        metrics[metric_name] = metric_func(y_test, y_pred_proba[:, 1])
             else:
                 metrics[metric_name] = metric_func(y_test, y_pred)
 
